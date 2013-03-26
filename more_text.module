@@ -1,0 +1,40 @@
+<?php
+/**
+ * @file
+ * Code for More text module.
+ */
+
+include_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'more_text') . '/more_text.field.inc');
+
+/**
+ * Returns trimmed string.
+ */
+function more_text_trim_text($text, $format = NULL, $size = NULL) {
+  $text = preg_replace('(^<p>|</p>$)', '', $text);
+  if (!isset($size)) {
+    $size = 300;
+  }
+
+  if (isset($format)) {
+    $filters = filter_list_format($format);
+    if (isset($filters['php_code']) && $filters['php_code']->status && strpos($text, '<?') !== FALSE) {
+      return array('summary' => $text, 'rest' => '');
+    }
+  }
+
+  if (drupal_strlen($text) <= $size) {
+    return array('summary' => $text, 'rest' => '');
+  }
+
+  // The summary may not be longer than maximum length specified. Initial slice.
+  $summary = truncate_utf8($text, $size);
+
+  // If the htmlcorrector filter is present, apply it to the generated summary.
+  if (isset($filters['filter_htmlcorrector'])) {
+    $summary = _filter_htmlcorrector($summary);
+  }
+
+  $output = explode($summary, $text);
+  $output = array('summary' => $summary, 'rest' => implode($output));
+  return implode($output);
+}
