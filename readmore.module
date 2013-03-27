@@ -2,29 +2,29 @@
 
 /**
  * @file
- * Code for More text module.
+ * Basic functional for readmore module.
  */
 
-define('MORE_TEXT_MODULE_PATH', drupal_get_path('module', 'more_text'));
+define('READMORE_MODULE_PATH', drupal_get_path('module', 'readmore'));
 
-include_once DRUPAL_ROOT . '/' . MORE_TEXT_MODULE_PATH . '/more_text.field.inc';
+include_once DRUPAL_ROOT . '/' . READMORE_MODULE_PATH . '/readmore.field.inc';
 
 /**
  * Implements hook_theme().
  */
-function more_text_theme() {
+function readmore_theme() {
   $base = array(
-    'path' => MORE_TEXT_MODULE_PATH . '/theme',
+    'path' => READMORE_MODULE_PATH . '/theme',
   );
 
   return array(
-    'more_text' => array(
+    'readmore' => array(
       'variables' => array(
         'summary' => NULL,
         'other' => NULL,
         'ellips' => NULL,
       ),
-      'template' => 'more-text',
+      'template' => 'readmore',
     ) + $base,
   );
 }
@@ -45,10 +45,10 @@ function more_text_theme() {
  * @return array
  *   Return array with truncated string and other text.
  */
-function more_text_divide_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE) {
+function readmore_divide_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE) {
   if (!isset($size)) {
     // If size is not set then use default.
-    $size = 300;
+    $size = 500;
   }
 
   // We check for the presence of the PHP evaluator filter in the current
