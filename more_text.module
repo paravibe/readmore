@@ -1,40 +1,131 @@
 <?php
+
 /**
  * @file
  * Code for More text module.
  */
 
-include_once(DRUPAL_ROOT . '/' . drupal_get_path('module', 'more_text') . '/more_text.field.inc');
+define('MORE_TEXT_MODULE_PATH', drupal_get_path('module', 'more_text'));
+
+include_once DRUPAL_ROOT . '/' . MORE_TEXT_MODULE_PATH . '/more_text.field.inc';
 
 /**
- * Returns trimmed string.
+ * Implements hook_theme().
  */
-function more_text_trim_text($text, $format = NULL, $size = NULL) {
-  $text = preg_replace('(^<p>|</p>$)', '', $text);
+function more_text_theme() {
+  $base = array(
+    'path' => MORE_TEXT_MODULE_PATH . '/theme',
+  );
+
+  return array(
+    'more_text' => array(
+      'variables' => array(
+        'summary' => NULL,
+        'other' => NULL,
+        'ellips' => NULL,
+      ),
+      'template' => 'more-text',
+    ) + $base,
+  );
+}
+
+
+/**
+ * Divides string on two parts by a number of characters.
+ *
+ * @param string $text
+ *   The string to truncate.
+ * @param string $format
+ *   a
+ * @param int $size
+ *   An upper limit on the returned string length.
+ * @param bool $wordsafe
+ *   If TRUE, attempt to truncate on a word boundary.
+ *
+ * @return array
+ *   Return array with truncated string and other text.
+ */
+function more_text_divide_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE) {
   if (!isset($size)) {
+    // If size is not set then use default.
     $size = 300;
   }
 
+  // We check for the presence of the PHP evaluator filter in the current
+  // format. If the body contains PHP code just return as is.
   if (isset($format)) {
     $filters = filter_list_format($format);
     if (isset($filters['php_code']) && $filters['php_code']->status && strpos($text, '<?') !== FALSE) {
-      return array('summary' => $text, 'rest' => '');
+      return $text;
     }
   }
 
-  if (drupal_strlen($text) <= $size) {
-    return array('summary' => $text, 'rest' => '');
-  }
+  // Store the actual length of the string.
+  $text_length = drupal_strlen($text);
 
   // The summary may not be longer than maximum length specified. Initial slice.
-  $summary = truncate_utf8($text, $size);
+  $summary = truncate_utf8($text, $size, $wordsafe, FALSE);
 
-  // If the htmlcorrector filter is present, apply it to the generated summary.
-  if (isset($filters['filter_htmlcorrector'])) {
-    $summary = _filter_htmlcorrector($summary);
+  // Store the actual length of the truncated string.
+  $max_rpos = drupal_strlen($summary);
+
+  if ($wordsafe) {
+    // How much to cut off the end of the summary so that it doesn't end in the
+    // middle of a paragraph, sentence, or word.
+    // Initialize it to maximum in order to find the minimum.
+    $min_rpos = $max_rpos;
+
+    // Store the reverse of the summary.
+    $reversed = strrev($summary);
+
+    // Build an array of arrays of break points grouped by preference.
+    $break_points = array();
+
+    // A paragraph near the end of sliced summary is most preferable.
+    $break_points[] = array('</p>' => 0);
+
+    // If no complete paragraph then treat line breaks as paragraphs.
+    $line_breaks = array('<br />' => 6, '<br>' => 4);
+    // Newline only indicates a line break if line break converter
+    // filter is present.
+    if (isset($filters['filter_autop'])) {
+      $line_breaks["\n"] = 1;
+    }
+    $break_points[] = $line_breaks;
+
+    // If the first paragraph is too long, split at the end of a sentence.
+    $break_points[] = array(
+      '. ' => 1,
+      '! ' => 1,
+      '? ' => 1,
+      '。' => 0,
+      '؟ ' => 1,
+    );
+
+    // Iterate over the groups of break points until a break point is found.
+    foreach ($break_points as $points) {
+      // Look for each break point, starting at the end of the summary.
+      foreach ($points as $point => $offset) {
+        // The summary is already reversed, but the break point isn't.
+        $rpos = strpos($reversed, strrev($point));
+        if ($rpos !== FALSE) {
+          $min_rpos = min($rpos + $offset, $min_rpos);
+        }
+      }
+
+      // If a break point was found in this group, slice and stop searching.
+      if ($min_rpos !== $max_rpos) {
+        // Don't slice with length 0. Length must be <0 to slice from RHS.
+        $summary = ($min_rpos === 0) ? $summary : drupal_substr($summary, 0, 0 - $min_rpos);
+        break;
+      }
+    }
+  }
+  else {
+    $min_rpos = 0;
   }
 
-  $output = explode($summary, $text);
-  $output = array('summary' => $summary, 'rest' => implode($output));
-  return implode($output);
+  $other = drupal_substr($text, $max_rpos - $min_rpos, $text_length);
+
+  return array('summary' => $summary, 'other' => $other);
 }

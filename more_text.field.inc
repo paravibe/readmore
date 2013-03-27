@@ -1,6 +1,8 @@
 <?php
+
 /**
  * @file
+ * Field formatter hooks to implement a more_text.
  */
 
 /**
@@ -10,8 +12,16 @@ function more_text_field_formatter_info() {
   return array(
     'more_text' => array(
       'label' => t('More text'),
-      'field types' => array('text', 'text_long', 'text_with_summary'),
-      'settings' => array('trim_length' => 300),
+      'field types' => array(
+        'text',
+        'text_long',
+        'text_with_summary',
+      ),
+      'settings' => array(
+        'trim_length' => 300,
+        'ellipsis' => TRUE,
+        'wordsafe' => FALSE,
+      ),
     ),
   );
 }
@@ -34,6 +44,16 @@ function more_text_field_formatter_settings_form($field, $instance, $view_mode, 
       '#element_validate' => array('element_validate_integer_positive'),
       '#required' => TRUE,
     );
+    $element['ellipsis'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Add ellipsis'),
+      '#default_value' => $settings['ellipsis'],
+    );
+    $element['wordsafe'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Truncate on a word boundary'),
+      '#default_value' => $settings['wordsafe'],
+    );
   }
 
   return $element;
@@ -48,10 +68,12 @@ function more_text_field_formatter_settings_summary($field, $instance, $view_mod
   $summary = '';
 
   if ($display['type'] == 'more_text') {
-    $summary = t('Trim length') . ': ' . $settings['trim_length'];
+    $summary[] = t('Trim length: @length', array('@length' => $settings['trim_length'])) . "\n";
+    $summary[] = $settings['ellipsis'] ? t('Add ellipsis') : t('Do not add ellipsis');
+    $summary[] = $settings['wordsafe'] ? t('Safe words') : t('Do not safe words');
   }
 
-  return $summary;
+  return implode('<br />', $summary);
 }
 
 /**
@@ -61,10 +83,21 @@ function more_text_field_formatter_view($entity_type, $entity, $field, $instance
   $element = array();
   switch ($display['type']) {
     case 'more_text':
+      drupal_add_js(MORE_TEXT_MODULE_PATH . '/js/more_text.js');
       foreach ($items as $delta => $item) {
         $output = _text_sanitize($instance, $langcode, $item, 'value');
-        $output = more_text_trim_text($output, $instance['settings']['text_processing'] ? $item['format'] : NULL, $display['settings']['trim_length']);
-        $element[$delta] = array('#markup' => $output);
+        $output = more_text_divide_string($output, isset($item['format']) ? $item['format'] : NULL, $display['settings']['trim_length'], $display['settings']['wordsafe']);
+        if (is_array($output)) {
+          $output['ellipsis'] = $display['settings']['ellipsis'];
+          $element[$delta] = array(
+            '#markup' => theme('more_text', $output),
+          );
+        }
+        else {
+          $element[$delta] = array(
+            '#markup' => $output,
+          );
+        }
       }
       break;
   }
