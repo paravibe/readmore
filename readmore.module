@@ -31,21 +31,21 @@ function readmore_theme() {
 
 
 /**
- * Divides string on two parts by a number of characters.
+ * Truncate string by a number of characters.
  *
  * @param string $text
  *   The string to truncate.
  * @param string $format
- *   a
+ *   The format of the content.
  * @param int $size
  *   An upper limit on the returned string length.
  * @param bool $wordsafe
  *   If TRUE, attempt to truncate on a word boundary.
  *
- * @return array
- *   Return array with truncated string and other text.
+ * @return string
+ *   Return truncated string.
  */
-function readmore_divide_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE) {
+function readmore_truncate_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE) {
   if (!isset($size)) {
     // If size is not set then use default.
     $size = 500;
@@ -66,10 +66,10 @@ function readmore_divide_string($text, $format = NULL, $size = NULL, $wordsafe =
   // The summary may not be longer than maximum length specified. Initial slice.
   $summary = truncate_utf8($text, $size, $wordsafe, FALSE);
 
-  // Store the actual length of the truncated string.
-  $max_rpos = drupal_strlen($summary);
-
   if ($wordsafe) {
+    // Store the actual length of the truncated string.
+    $max_rpos = drupal_strlen($summary);
+
     // How much to cut off the end of the summary so that it doesn't end in the
     // middle of a paragraph, sentence, or word.
     // Initialize it to maximum in order to find the minimum.
@@ -121,11 +121,6 @@ function readmore_divide_string($text, $format = NULL, $size = NULL, $wordsafe =
       }
     }
   }
-  else {
-    $min_rpos = 0;
-  }
 
-  $other = drupal_substr($text, $max_rpos - $min_rpos, $text_length);
-
-  return array('summary' => $summary, 'other' => $other);
+  return $summary;
 }

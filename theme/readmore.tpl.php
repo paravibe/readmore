@@ -6,15 +6,12 @@
  *
  * Available variables:
  * - $summary: Truncated string.
- * - $ellipsis: Flags true when need to add ellipsis.
- * - $other: Text that will be displayed after click 'read more' link.
+ * - $text: All text.
  */
 ?>
-<div class="readmore-wrapp">
+<div class="readmore-summary">
   <?php print $summary; ?>
-  <?php if ($ellipsis): ?>
-    <span class="readmore-ellipsis"><?php print t('...'); ?></span>
-  <?php endif; ?>
-  <a class="readmore-link" href="#"><?php print t('read more'); ?></a>
-  <div class="readmore-other" style="display:none;"><?php print $other; ?></div>
+</div>
+<div class="readmore-text" style="display:none;">
+  <?php print $text; ?>
 </div>

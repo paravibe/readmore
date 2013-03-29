@@ -1,12 +1,11 @@
 (function ($) {
   Drupal.behaviors.readmore = {
     attach : function(context, settings) {
-      $('.readmore-wrapp .readmore-link').click(function(e) {
+      $('.readmore-summary .readmore-link').click(function(e) {
         e.preventDefault();
-        $(this).hide();
-        var parent = $(this).closest('.readmore-wrapp');
-        parent.find('.readmore-ellipsis').hide();
-        parent.find('.readmore-other').slideDown(300);
+        var summary = $(this).closest('.readmore-summary');
+        summary.hide();
+        summary.next('.readmore-text').slideDown(300);
       });
     }
   };
