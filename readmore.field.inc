@@ -19,6 +19,7 @@ function readmore_field_formatter_info() {
       ),
       'settings' => array(
         'readmore_trim_length' => 500,
+        'readmore_show_readless' => FALSE,
         'readmore_ellipsis' => TRUE,
         'readmore_wordsafe' => FALSE,
       ),
@@ -43,6 +44,11 @@ function readmore_field_formatter_settings_form($field, $instance, $view_mode, $
       '#default_value' => $settings['readmore_trim_length'],
       '#element_validate' => array('element_validate_integer_positive'),
       '#required' => TRUE,
+    );
+    $element['readmore_show_readless'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show read less'),
+      '#default_value' => $settings['readmore_show_readless'],
     );
     $element['readmore_ellipsis'] = array(
       '#type' => 'checkbox',
@@ -69,6 +75,7 @@ function readmore_field_formatter_settings_summary($field, $instance, $view_mode
 
   if ($display['type'] == 'readmore') {
     $summary[] = t('Trim length: @length', array('@length' => $settings['readmore_trim_length'])) . "\n";
+    $summary[] = $settings['readmore_show_readless'] ? t('Show read less') : t('Do not show read less');
     $summary[] = $settings['readmore_ellipsis'] ? t('Add ellipsis') : t('Do not add ellipsis');
     $summary[] = $settings['readmore_wordsafe'] ? t('Safe words') : t('Do not safe words');
   }
@@ -86,15 +93,24 @@ function readmore_field_formatter_view($entity_type, $entity, $field, $instance,
       drupal_add_js(READMORE_MODULE_PATH . '/js/readmore.js');
       foreach ($items as $delta => $item) {
         $text = _text_sanitize($instance, $langcode, $item, 'value');
+
+        // Add Read less if need.
+        if ($display['settings']['readmore_show_readless']) {
+          $text .= ' ' . l(t('Read less'), current_path(), array('attributes' => array('class' => array('readless-link'))));
+        }
+
         // Get trimmed string.
         $summary = readmore_truncate_string($text, isset($item['format']) ? $item['format'] : NULL, $display['settings']['readmore_trim_length'], $display['settings']['readmore_wordsafe']);
+
         // Add readmore link.
         $summary .= '<span>';
         $summary .= $display['settings']['readmore_ellipsis'] ? t('...') : NULL;
         $summary .= l(t('read more'), current_path(), array('attributes' => array('class' => array('readmore-link'))));
         $summary .= '</span>';
+
         // Close all HTML tags.
         $summary = _filter_htmlcorrector($summary);
+
         $element[$delta] = array(
           '#markup' => theme(
             'readmore',
