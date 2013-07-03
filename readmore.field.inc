@@ -93,15 +93,15 @@ function readmore_field_formatter_view($entity_type, $entity, $field, $instance,
       drupal_add_js(READMORE_MODULE_PATH . '/js/readmore.js');
       foreach ($items as $delta => $item) {
         $text = _text_sanitize($instance, $langcode, $item, 'value');
+        $text_length = drupal_strlen($text);
 
         // Add Read less if need.
-        if ($display['settings']['readmore_show_readless']) {
+        if ($display['settings']['readmore_show_readless'] && $text_length > $display['settings']['readmore_trim_length']) {
           $text .= ' ' . l(t('Read less'), current_path(), array('attributes' => array('class' => array('readless-link'))));
         }
 
-        //If text length is greather than settings then add read more.
-        $text_length = drupal_strlen($text);
-        if ($text_length >= $display['settings']['readmore_trim_length']) {
+        // If text length is greather than settings then add read more.
+        if ($text_length > $display['settings']['readmore_trim_length']) {
           // Get trimmed string.
           $summary = readmore_truncate_string($text, isset($item['format']) ? $item['format'] : NULL, $display['settings']['readmore_trim_length'], $display['settings']['readmore_wordsafe']);
 
