@@ -93,42 +93,33 @@ function readmore_field_formatter_view($entity_type, $entity, $field, $instance,
       drupal_add_js(READMORE_MODULE_PATH . '/js/readmore.js');
       foreach ($items as $delta => $item) {
         $text = _text_sanitize($instance, $langcode, $item, 'value');
-        $text_length = drupal_strlen($text);
 
         // Add Read less if need.
-        if ($display['settings']['readmore_show_readless'] && $text_length > $display['settings']['readmore_trim_length']) {
+        if ($display['settings']['readmore_show_readless']) {
           $text .= ' ' . l(t('Read less'), current_path(), array('attributes' => array('class' => array('readless-link'))));
         }
 
-        // If text length is greather than settings then add read more.
-        if ($text_length > $display['settings']['readmore_trim_length']) {
-          // Get trimmed string.
-          $summary = readmore_truncate_string($text, isset($item['format']) ? $item['format'] : NULL, $display['settings']['readmore_trim_length'], $display['settings']['readmore_wordsafe']);
+        // Get trimmed string.
+        $summary = readmore_truncate_string($text, isset($item['format']) ? $item['format'] : NULL, $display['settings']['readmore_trim_length'], $display['settings']['readmore_wordsafe']);
 
-          // Add readmore link.
-          $summary .= '<span>';
-          $summary .= $display['settings']['readmore_ellipsis'] ? t('...') : NULL;
-          $summary .= l(t('read more'), current_path(), array('attributes' => array('class' => array('readmore-link'))));
-          $summary .= '</span>';
+        // Add readmore link.
+        $summary .= '<span>';
+        $summary .= $display['settings']['readmore_ellipsis'] ? t('...') : NULL;
+        $summary .= l(t('read more'), current_path(), array('attributes' => array('class' => array('readmore-link'))));
+        $summary .= '</span>';
 
-          // Close all HTML tags.
-          $summary = _filter_htmlcorrector($summary);
+        // Close all HTML tags.
+        $summary = _filter_htmlcorrector($summary);
 
-          $element[$delta] = array(
-            '#markup' => theme(
-              'readmore',
-              array(
-                'text' => $text,
-                'summary' => $summary,
-              )
-            ),
-          );
-        }
-        else {
-          $element[$delta] = array(
-            '#markup' => $text,
-          );
-        }
+        $element[$delta] = array(
+          '#markup' => theme(
+            'readmore',
+            array(
+              'text' => $text,
+              'summary' => $summary,
+            )
+          ),
+        );
       }
       break;
   }
