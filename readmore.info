@@ -1,4 +1,0 @@
-name = Read more
-description = Add "read more" field formatter.
-core = 7.x
-package = Fields
