@@ -19,6 +19,7 @@ function readmore_field_formatter_info() {
       ),
       'settings' => array(
         'readmore_trim_length' => 500,
+        'readmore_trim_on_break' => TRUE,
         'readmore_show_readless' => FALSE,
         'readmore_ellipsis' => TRUE,
         'readmore_wordsafe' => FALSE,
@@ -44,6 +45,12 @@ function readmore_field_formatter_settings_form($field, $instance, $view_mode, $
       '#default_value' => $settings['readmore_trim_length'],
       '#element_validate' => array('element_validate_integer_positive'),
       '#required' => TRUE,
+    );
+    $element['readmore_trim_on_break'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Trim on @break', array('@break' => '<!--break-->')),
+      '#description' => t('If @break not found in the text then trim length used.', array('@break' => '<!--break-->')),
+      '#default_value' => $settings['readmore_trim_on_break'],
     );
     $element['readmore_show_readless'] = array(
       '#type' => 'checkbox',
@@ -74,7 +81,8 @@ function readmore_field_formatter_settings_summary($field, $instance, $view_mode
   $summary = '';
 
   if ($display['type'] == 'readmore') {
-    $summary[] = t('Trim length: @length', array('@length' => $settings['readmore_trim_length'])) . "\n";
+    $summary[] = t('Trim length: @length', array('@length' => $settings['readmore_trim_length']));
+    $summary[] = $settings['readmore_trim_on_break'] ? t('Trim on @break', array('@break' => '<!--break-->')) : t('Do not trim on @break', array('@break' => '<!--break-->'));
     $summary[] = $settings['readmore_show_readless'] ? t('Show read less') : t('Do not show read less');
     $summary[] = $settings['readmore_ellipsis'] ? t('Add ellipsis') : t('Do not add ellipsis');
     $summary[] = $settings['readmore_wordsafe'] ? t('Safe words') : t('Do not safe words');
@@ -108,7 +116,8 @@ function readmore_field_formatter_view($entity_type, $entity, $field, $instance,
             $text,
             isset($item['format']) ? $item['format'] : NULL,
             $trim_length,
-            $display['settings']['readmore_wordsafe']
+            $display['settings']['readmore_wordsafe'],
+            $display['settings']['readmore_trim_on_break']
           );
 
           // Add readmore link.

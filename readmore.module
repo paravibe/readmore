@@ -45,10 +45,20 @@ function readmore_theme() {
  * @return string
  *   Return truncated string.
  */
-function readmore_truncate_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE) {
+function readmore_truncate_string($text, $format = NULL, $size = NULL, $wordsafe = FALSE, $use_break = TRUE) {
   if (!isset($size)) {
     // If size is not set then use default.
     $size = 500;
+  }
+
+  if ($use_break) {
+    // Find where the delimiter is in the body.
+    $delimiter = strpos($text, '<!--break-->');
+
+    if ($delimiter) {
+      // Set new size.
+      $size = $delimiter;
+    }
   }
 
   // We check for the presence of the PHP evaluator filter in the current
@@ -59,9 +69,6 @@ function readmore_truncate_string($text, $format = NULL, $size = NULL, $wordsafe
       return $text;
     }
   }
-
-  // Store the actual length of the string.
-  $text_length = drupal_strlen($text);
 
   // The summary may not be longer than maximum length specified. Initial slice.
   $summary = truncate_utf8($text, $size, $wordsafe, FALSE);
